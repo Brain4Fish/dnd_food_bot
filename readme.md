@@ -8,7 +8,7 @@ In first view you can think, that we spend not so much time on this. BUT, let's 
 
 ## How to install
 
-1. Create new bot via BotFather
+1. Create new bot via BotFather. Disable bot privacy to read input from chat
 
 2. Place your token into file `config.py` like this
 
