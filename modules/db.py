@@ -76,20 +76,19 @@ def create_food_table():
     db_exec(query)
 
 
-def get_food_orders():
+def get_food_orders(limit = 10):
     '''
-    Fetch food orders from database
+    Fetch last N food orders from database
     '''
-    query = f'''SELECT * FROM (SELECT rowid, date, who, type from food ORDER BY rowid DESC LIMIT 10) ORDER BY rowid ASC;'''
+    query = f'''SELECT * FROM (SELECT rowid, date, who, type from food ORDER BY rowid DESC LIMIT {limit}) ORDER BY rowid ASC;'''
     return db_fetch(query)
 
 
 def add_food_order():
     '''
-    Fetch food orders from database
+    Add food order to database
     '''
-    query = f'''SELECT * FROM (SELECT rowid, date, who, type from food ORDER BY rowid DESC LIMIT 10) ORDER BY rowid ASC;'''
-    return db_fetch(query)
+    pass
 
 ##
 # User related things
@@ -104,11 +103,11 @@ def create_users_table():
     db_exec(query)
 
 
-def get_users():
+def get_users(limit = 10):
     '''
-    Fetch food orders from database
+    Fetch last N users from database
     '''
-    query = '''SELECT * FROM (SELECT rowid, user from users ORDER BY rowid DESC LIMIT 10) ORDER BY rowid ASC;'''
+    query = f'''SELECT * FROM (SELECT rowid, user from users ORDER BY rowid DESC LIMIT {limit}) ORDER BY rowid ASC;'''
     return db_fetch(query)
 
 def add_user(username):
