@@ -84,11 +84,13 @@ def get_food_orders(limit = 10):
     return db_fetch(query)
 
 
-def add_food_order():
+def add_food_order(data):
     '''
     Add food order to database
     '''
-    pass
+    query = f'''INSERT OR IGNORE INTO food ('date', 'who', 'type')
+                  VALUES ('{data[0]}', '{data[1]}', '{data[2]}');'''
+    db_exec(query)
 
 ##
 # User related things
