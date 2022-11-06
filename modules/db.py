@@ -124,15 +124,34 @@ def add_user(username):
     db_exec(query)
     print(username)
 
-# def add_evening_entry(dpi_list):
-#     '''
-#     Add entry to the database
-#     '''
-#     for dpi in dpi_list:
-#         # add each dpi as individual line
-#         dpi_initial_query = f'''INSERT OR IGNORE INTO {TABLE_NAME} ('{DPI_NAME_COLUMN}', '{LAST_IMPORTED_FOLDER_COLUMN}', '{LAST_IMPORTED_CDR_FOLDER_COLUMN}')
-#                     VALUES ('{dpi}', '1970-01-01', '1970-01-01 12:00:00');'''
-#         with DbConnect() as sql_connection:
-#             db_connection, cursor = sql_connection
-#             cursor.execute(dpi_initial_query)
-#             db_connection.commit()
+##
+# Food type related things
+##
+
+def create_types_table():
+    '''
+    Create food types table in database
+    '''
+    query = '''CREATE TABLE IF NOT EXISTS food_types (
+                    type TEXT NOT NULL);'''
+    db_exec(query)
+
+
+def get_food_types():
+    '''
+    Fetch food types from database
+    '''
+    query = f'''SELECT type FROM food_types;'''
+    return db_fetch(query)
+
+def add_food_type(food_type):
+    '''
+    Add food type to the database
+    '''
+    check_query = f'''SELECT type FROM food_types WHERE type = "{food_type}"'''
+    if db_fetch(check_query):
+        return "Food type already exists"
+    query = f'''INSERT OR IGNORE INTO food_types ('type')
+                  VALUES ('{food_type}');'''
+    db_exec(query)
+
