@@ -1,88 +1,93 @@
 #!/usr/bin/python3
 
+from ast import pattern
+from email import message
 import telebot
 from datetime import date
 import config
 import modules.db as db
 import modules.table as tb
 
-bot = telebot.TeleBot(config.TOKEN)
-
+############################### Keyboards ############################################
 USER_COMMANDS = {
     0: "🛒 Who should order today?",
     1: "🍽 Add today's order (user will be calculated)",
     2: "🛍 List 10 last orders",
-    100: "❌ Cancel",
+    -1: "❌ Cancel",
 }
 
 ADMIN_COMMANDS = {
     0: "Return to user menu",
     10: "Show users in food rotation",
     11: "Add new user to food rotation",
-    100: "❌ Cancel",
+    -1: "❌ Cancel",
 }
 
-
-def bot_keyboard_setup(commands_list):
-    markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+def keyboard_setup(commands_list, prefix):
+    markup = telebot.types.InlineKeyboardMarkup()
     for cmd in commands_list.items():
-        markup.add(telebot.types.KeyboardButton(f"{cmd[0]} - {cmd[1]}"))
+        markup.add(telebot.types.InlineKeyboardButton(cmd[1], callback_data=f"{prefix}_{cmd[0]}"))
     return markup
 
+############################### Bot ############################################
+bot = telebot.TeleBot(config.TOKEN)
 
+############################### Messages ############################################
 @bot.message_handler(commands=['start', 'bot'])
 def main_menu(message):
-    msg = bot.send_message(message.chat.id,
+    bot.send_message(message.chat.id,
                     f'Howdy, how are you doing? Ima ready for some work',
-                    reply_markup = bot_keyboard_setup(USER_COMMANDS)
+                    reply_markup = keyboard_setup(USER_COMMANDS, 'user')
                     )
-    bot.register_next_step_handler(msg, user_menu)
+    # bot.register_next_step_handler(msg, user_menu)
+
 
 
 @bot.message_handler(commands=['settings'])
 def admin_menu(message):
-    msg = bot.send_message(message.chat.id,
+    bot.send_message(message.chat.id,
                     f'Change settings carefully!',
-                    reply_markup = bot_keyboard_setup(ADMIN_COMMANDS)
+                    reply_markup = keyboard_setup(ADMIN_COMMANDS, 'admin')
                     )
-    bot.register_next_step_handler(msg, admin_menu)
+    # bot.register_next_step_handler(msg, admin_menu)
 
 
-def user_menu(message):
-    match int(message.text.split("-")[0]):
+############################### Handlers ############################################
+@bot.callback_query_handler(func=lambda call: 'user' in call.data)
+def user_menu(call):
+    menu_item = call.data.split("_")[-1]
+    message = call.message
+    match int(menu_item):
         case 0:
-            msg = bot.send_message(
-                message.chat.id, f"{who_will_order()} should make the order")
+            msg = bot.send_message(message.chat.id, f"{who_will_order()} should make the order")
         case 1:
             msg = bot.send_message(message.chat.id, f"{who_will_order()} is making order and it is (choose one type):")
             bot.register_next_step_handler(msg, add_order)
         case 2:
             table = tb.form_table(['id', 'date', 'ordered by', 'type'], db.get_food_orders())
-            msg = bot.send_message(message.chat.id, f"<pre>{table}</pre>", 'HTML')
+            bot.send_message(message.chat.id, f"<pre>{table}</pre>", 'HTML')
         case _:
-            msg = bot.send_message(message.chat.id, "Cancelling")
-    bot.register_next_step_handler(msg, user_menu)
+            pass
+    bot.edit_message_reply_markup(message.chat.id, message.id)
 
 
-def admin_menu(message):
-    match int(message.text.split("-")[0]):
-        case 0:
-            msg = bot.send_message(message.chat.id, "Returning to main menu", reply_markup = bot_keyboard_setup(USER_COMMANDS))
-            # bot.register_next_step_handler(msg, user_menu)
-            # return
+@bot.callback_query_handler(func=lambda call: 'admin' in call.data)
+def admin_menu(call):
+    menu_item = call.data.split("_")[-1]
+    message = call.message
+    match int(menu_item):
         case 10:
             table = tb.form_table(['id', 'username'], db.get_users())
-            msg = bot.send_message(message.chat.id, f"<pre>{table}</pre>", 'HTML')
+            bot.send_message(message.chat.id, f"<pre>{table}</pre>", 'HTML')
         case 11:
             msg = bot.send_message(message.chat.id, 'Enter username of your teammate (/cancel to cancel operation):')
             bot.register_next_step_handler(msg, add_user_helper)
         case _:
-            msg = bot.send_message(message.chat.id, "Cancelling")
-            return
-    bot.register_next_step_handler(msg, user_menu)
+            pass
+    bot.edit_message_reply_markup(message.chat.id, message.id)
 
 
-# add user
+############################### Functions ############################################
 def add_user_helper(message):
     username = message.text
     if '@' in username:
@@ -109,11 +114,11 @@ def who_will_order():
     # Increase user id counter to find who will order next
     user_id += 1
     print(user_id, len(users))
-    if user_id >= len(users):
+    if user_id > len(users):
         print("Lap ended. Start from the beginning!")
         user_id = 0
-    print(users[user_id][1])
-    return users[user_id][1]
+    print(users[user_id-1][1])
+    return users[user_id-1][1]
     
 
 def add_order(message):
@@ -132,4 +137,5 @@ def main():
     )
     bot.infinity_polling()
 
+############################# Launch #########################################
 main()
