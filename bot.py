@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-from ast import pattern
-from email import message
 import telebot
 from datetime import date
 import config
