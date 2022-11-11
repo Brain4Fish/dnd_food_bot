@@ -17,9 +17,8 @@ USER_COMMANDS = {
 }
 
 ADMIN_COMMANDS = {
-    0: "Return to user menu",
-    10: "Show users in food rotation",
-    11: "Add new user to food rotation",
+    0: "👥 Show users in food rotation",
+    1: "❇️ Add new user to food rotation",
     -1: "❌ Cancel",
 }
 
@@ -76,11 +75,11 @@ def admin_menu(call):
     menu_item = call.data.split("_")[-1]
     message = call.message
     match int(menu_item):
-        case 10:
+        case 0:
             table = tb.form_table(['id', 'username'], db.get_users())
             bot.send_message(message.chat.id, f"<pre>{table}</pre>", 'HTML')
-        case 11:
-            msg = bot.send_message(message.chat.id, 'Enter username of your teammate (/cancel to cancel operation):')
+        case 1:
+            msg = bot.send_message(message.chat.id, 'Enter username of your teammate:')
             bot.register_next_step_handler(msg, add_user_helper)
         case _:
             pass
