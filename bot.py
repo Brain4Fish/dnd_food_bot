@@ -91,34 +91,27 @@ def admin_menu(call):
 def add_user_helper(message):
     username = message.text
     if '@' in username:
-        msg = bot.send_message(message.chat.id, 'User name received. Adding to DB')
+        msg = bot.send_message(message.chat.id, '✅ User name received. Adding to DB')
         db.add_user(username)
-    elif '/cancel' in username:
-        bot.send_message(message.chat.id, 'Cancelling')
+    # elif '/cancel' in username:
+    #     bot.send_message(message.chat.id, 'Cancelling')
     else:
-        msg = bot.send_message(message.chat.id, 'Username should starts with symbol @. Try again pls')
-        bot.register_next_step_handler(msg, add_user_helper)
+        bot.send_message(message.chat.id, '❌ Username should starts with symbol @. Cancelling')
+        # To infinity retrying uncomment lines below
+        # msg = bot.send_message(message.chat.id, 'Username should starts with symbol @. Try again pls')
+        # bot.register_next_step_handler(msg, add_user_helper) 
 
 
 def who_will_order():
     orders = db.get_food_orders(1)
     last_user = orders[0][2] if len(orders) > 0 else ""
-    users = db.get_users(1000)
-    user_id = 0
-
+    users = [user[1] for user in db.get_users(1000)]
+    user_idx = 0
     for user in users:
-        if last_user in user[1]:
-            print("Match!")
-            user_id = user[0]
-    print(last_user, users, user_id)
-    # Increase user id counter to find who will order next
-    user_id += 1
-    print(user_id, len(users))
-    if user_id > len(users):
-        print("Lap ended. Start from the beginning!")
-        user_id = 0
-    print(users[user_id-1][1])
-    return users[user_id-1][1]
+        if last_user == user:
+            current_user_idx = users.index(user)
+            user_idx = current_user_idx + 1 if current_user_idx < len(users)-1 else 0
+    return users[user_idx]
     
 
 def add_order(message):
