@@ -9,7 +9,7 @@ import modules.table as tb
 
 ############################### Keyboards ############################################
 USER_COMMANDS = {
-    0: "🛒 Who should order today?",
+    0: "🛒❓ Who should order today?",
     1: "🍽 Add today's order (user will be calculated)",
     2: "🛍 List 10 last orders",
     -1: "❌ Cancel",
@@ -18,8 +18,8 @@ USER_COMMANDS = {
 ADMIN_COMMANDS = {
     0: "👥 Show users in food rotation",
     1: "❇️ Add new user to food rotation",
-    2: "Show food types",
-    3: "Add new food type",
+    2: "🍱 Show food types",
+    3: "🍳 Add new food type",
     -1: "❌ Cancel",
 }
 
@@ -136,6 +136,11 @@ def add_user_helper(message):
 
 def who_will_order():
     orders = db.get_food_orders(1)
+    if not orders:
+        users = db.get_users()
+        if not users:
+            return "None"
+        return users[0][1]
     last_user = orders[0][2] if len(orders) > 0 else ""
     users = [user[1] for user in db.get_users(1000)]
     user_idx = 0
