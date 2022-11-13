@@ -22,7 +22,10 @@ class DbConnect(object):
 
         Returns tuple of two objects: connection and cursor for database access
         '''
-        self.dbconn = sqlite3.connect(f'{self.exec_path}/{self.database}')
+        final_path = f'{self.exec_path}/db'
+        if not os.path.exists(final_path):
+            os.makedirs(final_path)
+        self.dbconn = sqlite3.connect(f'{final_path}/{self.database}')
         return self.dbconn, self.dbconn.cursor()
 
     def __exit__(self, type, value, traceback):
