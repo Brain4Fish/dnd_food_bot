@@ -3,7 +3,8 @@
 from ntpath import join
 import telebot
 from datetime import date
-import config
+import os
+import sys
 import modules.db as db
 import modules.table as tb
 
@@ -43,7 +44,12 @@ def food_types_kb(types_list, row_width=1):
 
 
 ############################### Bot ############################################
-bot = telebot.TeleBot(config.TOKEN)
+try:
+    token = os.environ.get('BOT_TOKEN') if os.environ.get('BOT_TOKEN') else sys.exit("BOT_TOKEN is not set")
+    bot = telebot.TeleBot(token)
+except:
+    import config
+    bot = telebot.TeleBot(config.TOKEN)
 
 ############################### Messages ############################################
 @bot.message_handler(commands=['start', 'bot'])
