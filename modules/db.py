@@ -60,6 +60,7 @@ def create_tables():
     print("Initialising databases")
     create_food_table()
     create_users_table()
+    create_types_table()
 
 ##
 # Orders related things
@@ -112,6 +113,7 @@ def get_users(limit = 10):
     query = f'''SELECT * FROM (SELECT rowid, user from users ORDER BY rowid DESC LIMIT {limit}) ORDER BY rowid ASC;'''
     return db_fetch(query)
 
+
 def add_user(username):
     '''
     Add user to the database
@@ -122,7 +124,6 @@ def add_user(username):
     query = f'''INSERT OR IGNORE INTO users ('user')
                   VALUES ('{username}');'''
     db_exec(query)
-    print(username)
 
 ##
 # Food type related things
@@ -137,21 +138,35 @@ def create_types_table():
     db_exec(query)
 
 
-def get_food_types():
+def get_food_types(as_table = False):
     '''
     Fetch food types from database
     '''
     query = f'''SELECT type FROM food_types;'''
-    return db_fetch(query)
+    result = db_fetch(query)
+    if as_table:
+        return result
+    types = [food[0] for food in result]
+    tmp = {}
+    for type in types:
+        tmp[types.index(type)] = type
+    return tmp
 
-def add_food_type(food_type):
+
+def get_specific_food_type(id):
+    id += 1 # We need this, because sqlite id's starts from 1
+    query = f'''SELECT type FROM food_types WHERE rowid = {id};'''
+    return db_fetch(query)[0][0]
+
+
+def add_food_type(message):
     '''
     Add food type to the database
     '''
+    food_type = message.text
     check_query = f'''SELECT type FROM food_types WHERE type = "{food_type}"'''
     if db_fetch(check_query):
         return "Food type already exists"
     query = f'''INSERT OR IGNORE INTO food_types ('type')
                   VALUES ('{food_type}');'''
     db_exec(query)
-

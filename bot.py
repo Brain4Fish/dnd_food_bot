@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from ntpath import join
 import telebot
 from datetime import date
 import config
@@ -17,14 +18,29 @@ USER_COMMANDS = {
 ADMIN_COMMANDS = {
     0: "👥 Show users in food rotation",
     1: "❇️ Add new user to food rotation",
+    2: "Show food types",
+    3: "Add new food type",
     -1: "❌ Cancel",
 }
+
 
 def keyboard_setup(commands_list, prefix):
     markup = telebot.types.InlineKeyboardMarkup()
     for cmd in commands_list.items():
         markup.add(telebot.types.InlineKeyboardButton(cmd[1], callback_data=f"{prefix}_{cmd[0]}"))
     return markup
+
+
+def food_types_kb(types_list, row_width=1):
+    markup = telebot.types.InlineKeyboardMarkup()
+    buttons_list = []
+    for type in types_list.items():
+        buttons_list.append(telebot.types.InlineKeyboardButton(type[1], callback_data=f"food_type_{type[0]}"))
+    buttons_list.append(telebot.types.InlineKeyboardButton("❌ Cancel", callback_data="food_type_-1"))
+    markup.add(*buttons_list)
+    markup.row_width = row_width
+    return markup
+
 
 ############################### Bot ############################################
 bot = telebot.TeleBot(config.TOKEN)
@@ -36,8 +52,6 @@ def main_menu(message):
                     f'Howdy, how are you doing? Ima ready for some work',
                     reply_markup = keyboard_setup(USER_COMMANDS, 'user')
                     )
-    # bot.register_next_step_handler(msg, user_menu)
-
 
 
 @bot.message_handler(commands=['settings'])
@@ -46,7 +60,6 @@ def admin_menu(message):
                     f'Change settings carefully!',
                     reply_markup = keyboard_setup(ADMIN_COMMANDS, 'admin')
                     )
-    # bot.register_next_step_handler(msg, admin_menu)
 
 
 ############################### Handlers ############################################
@@ -56,10 +69,11 @@ def user_menu(call):
     message = call.message
     match int(menu_item):
         case 0:
-            msg = bot.send_message(message.chat.id, f"{who_will_order()} should make the order")
+            bot.send_message(message.chat.id, f"{who_will_order()} should make next order")
         case 1:
-            msg = bot.send_message(message.chat.id, f"{who_will_order()} is making order and it is (choose one type):")
-            bot.register_next_step_handler(msg, add_order)
+            bot.send_message(message.chat.id, 
+                            f"{who_will_order()} is making order and it is (choose one type):",
+                            reply_markup = food_types_kb(db.get_food_types(), 3))
         case 2:
             table = tb.form_table(['id', 'date', 'ordered by', 'type'], db.get_food_orders())
             bot.send_message(message.chat.id, f"<pre>{table}</pre>", 'HTML')
@@ -79,10 +93,31 @@ def admin_menu(call):
         case 1:
             msg = bot.send_message(message.chat.id, 'Enter username of your teammate:')
             bot.register_next_step_handler(msg, add_user_helper)
+        case 2:
+            table = tb.form_table(['type'], db.get_food_types(True))
+            bot.send_message(message.chat.id, f"<pre>{table}</pre>", 'HTML')
+        case 3:
+            msg = bot.send_message(message.chat.id, 'Enter new food type:')
+            bot.register_next_step_handler(msg, db.add_food_type)
         case _:
             pass
     bot.edit_message_reply_markup(message.chat.id, message.id)
 
+
+@bot.callback_query_handler(func=lambda call: 'food_type' in call.data)
+def food_types_menu(call):
+    menu_item = call.data.split("_")[-1]
+    message = call.message
+    match int(menu_item):
+        case -1:
+            bot.edit_message_reply_markup(message.chat.id, message.id)
+            bot.send_message(message.chat.id, 'Cancel adding')
+        case _:
+            food_type = db.get_specific_food_type(int(menu_item))
+            add_order(food_type)
+            bot.edit_message_reply_markup(message.chat.id, message.id)
+            bot.send_message(message.chat.id, 'Successfully added')
+            return
 
 ############################### Functions ############################################
 def add_user_helper(message):
@@ -111,17 +146,16 @@ def who_will_order():
     return users[user_idx]
     
 
-def add_order(message):
+def add_order(food_type):
     user = who_will_order()
     todays_date = date.today().strftime('%d.%m.%Y')
-    db.add_food_order([todays_date, user, ''])
+    db.add_food_order([todays_date, user, food_type])
 
 
 def main():
     db.create_tables()
     bot.set_my_commands([
         telebot.types.BotCommand("/start", "Call food bot"),
-        telebot.types.BotCommand("/bot", "Another way to call bot"),
         telebot.types.BotCommand("/settings", "Adjust bot settings (like users in rotation)"),
         ]
     )
