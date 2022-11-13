@@ -6,13 +6,17 @@ We love to play DND (dungeon and dragons) RPG game. It takes pretty big amout of
 
 In first view you can think, that we spend not so much time on this. BUT, let's calculate. For example, we spend 10 minutes to choose who should order the food every play. Every month we play at least 4 times, that means that we spend 40 minutes per month to remembering past orders. But sometimes we play 6-8 times per month which will give 80 (!) minutes of choosing food every month or 12 * 80 = 960 minutes or 16 hours of choosing per year! You can spend this time in cool fighting with ogre or licking mimic door
 
-## How to install
+## How to install (without docker)
 
 1. Create new bot via BotFather. Disable bot privacy to read input from chat
 
 2. Place your token into file `config.py` like this
 
 ```TOKEN = 'XXXXXX:YYYYYYYYYYYY'```
+
+Or if you wanna use env var, then you can use:
+
+```export BOT_TOKEN=XXXXXX:YYYYYYYYYYYY```
 
 3. Download all dependencies via: ```pytohn3 -m pip install -r requirements.txt```
 
@@ -21,6 +25,22 @@ In first view you can think, that we spend not so much time on this. BUT, let's 
 5. Add your bot to telegram group with your friends!
 
 6. Clean all dungeons!
+
+## Use dockerised version
+
+Docker/Podman should be installed and then you can simply build image with:
+
+```docker build -t dnd-bot:latest .```
+
+After successful build run it like:
+
+```docker run --restart=always -d -e BOT_TOKEN='XXXXXX:YYYYYYYYYYYY' -v ./db:/modules/db dnd-bot:latest```
+
+where:
+
+ * **-d** - detach from console. Your container will run in background
+ * **-e BOT_TOKEN** - define your token in env var
+ * **-v ./db:/modules/db** - define your host folder that will be user as host mount bind for database 
 
 
 ## Commands
@@ -32,5 +52,5 @@ This bot has two main commands:
 
 ## TODO
 
- * Add docker support for easier installation
  * Allow delete users and food types
+ * Add docker-compose file
