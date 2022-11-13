@@ -36,13 +36,16 @@ class DbConnect(object):
 # General DB functions
 ##
 
-def db_exec(query):
+def db_exec(query, bulkdata=None):
     '''
     Executing database query
     '''
     with DbConnect() as sql_connection:
         db_connection, cursor = sql_connection
-        cursor.execute(query)
+        if bulkdata:
+            cursor.executemany(query, bulkdata)
+        else:
+            cursor.execute(query)
         db_connection.commit()
 
 
@@ -61,6 +64,8 @@ def create_tables():
     create_food_table()
     create_users_table()
     create_types_table()
+    init_food_types()
+    print("Done")
 
 ##
 # Orders related things
@@ -133,8 +138,7 @@ def create_types_table():
     '''
     Create food types table in database
     '''
-    query = '''CREATE TABLE IF NOT EXISTS food_types (
-                    type TEXT NOT NULL);'''
+    query = '''CREATE TABLE IF NOT EXISTS food_types (type TEXT NOT NULL, UNIQUE(type));'''
     db_exec(query)
 
 
@@ -170,3 +174,12 @@ def add_food_type(message):
     query = f'''INSERT OR IGNORE INTO food_types ('type')
                   VALUES ('{food_type}');'''
     db_exec(query)
+
+
+def init_food_types():
+    '''
+    Add initial food types
+    '''
+    types = ['🍔', '🍕', '🌯', '🍜', '🍣']
+    query = f'''INSERT OR IGNORE INTO food_types ('type') VALUES (?);'''
+    db_exec(query, types)
